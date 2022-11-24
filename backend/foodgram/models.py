@@ -71,11 +71,11 @@ class Recipes(models.Model):
 
 
 class RecipeIngredients(models.Model):
-    recipe = models.ForeignKey(Recipes, on_delete=models.CASCADE)
+    recipe = models.ForeignKey(Recipes, on_delete=models.CASCADE, related_name='ingredients')
     amount = models.PositiveSmallIntegerField(
         'количество', validators=[bigger_than_zero, ]
     )
-    ingredient = models.ForeignKey(Ingredients, on_delete=models.CASCADE)
+    ingredient = models.ForeignKey(Ingredients, on_delete=models.CASCADE, related_name='recipes')
 
     class Meta:
         ordering = ('pk',)
@@ -88,10 +88,10 @@ class RecipeIngredients(models.Model):
 
 class Favorites(models.Model):
     recipe = models.ForeignKey(
-        Recipes, on_delete=models.CASCADE, related_name='user'
+        Recipes, on_delete=models.CASCADE, related_name='favorited'
     )
     user = models.ForeignKey(
-        User, on_delete=models.CASCADE, related_name='recipe'
+        User, on_delete=models.CASCADE, related_name='favorites'
     )
 
     class Meta:
