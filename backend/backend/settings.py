@@ -137,6 +137,7 @@ REST_FRAMEWORK = {
     'TEST_REQUEST_RENDERER_CLASSES': [
         'rest_framework.renderers.JSONRenderer',
     ],
+    'PAGE_SIZE': 4
 }
 
 DJOSER = {

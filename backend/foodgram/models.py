@@ -51,12 +51,12 @@ class Recipes(models.Model):
     image = models.ImageField(
         'Изображение рецепта', upload_to='recipes/'
     )
-    description = models.TextField('описание рецепта')
-    ingredients = models.ManyToManyField(
-        Ingredients, through='RecipeIngridients',
-        verbose_name='ингридиенты', db_index=True
-    )
+    text = models.TextField('описание рецепта')
     tags = models.ManyToManyField(Tags, verbose_name='тэги', db_index=True)
+    ingredients = models.ManyToManyField(
+        Ingredients, through='RecipeIngredients',
+        db_index=True, verbose_name='ингридиенты',
+    )
     cooking_time = models.PositiveSmallIntegerField(
         'Время приготовления', validators=[bigger_than_zero, ]
     )
@@ -71,11 +71,15 @@ class Recipes(models.Model):
 
 
 class RecipeIngredients(models.Model):
-    recipe = models.ForeignKey(Recipes, on_delete=models.CASCADE, related_name='ingredients')
+    recipe = models.ForeignKey(
+        Recipes, on_delete=models.CASCADE, related_name='recipe_ingredient'
+    )
     amount = models.PositiveSmallIntegerField(
         'количество', validators=[bigger_than_zero, ]
     )
-    ingredient = models.ForeignKey(Ingredients, on_delete=models.CASCADE, related_name='recipes')
+    ingredient = models.ForeignKey(
+        Ingredients, on_delete=models.CASCADE,
+    )
 
     class Meta:
         ordering = ('pk',)
@@ -83,7 +87,7 @@ class RecipeIngredients(models.Model):
         verbose_name_plural = 'Ингридиенты для рецепта'
 
     def __str__(self) -> str:
-        return f'{self.recipe} - {self.ingridient}'
+        return f'{self.recipe} - {self.ingredient}'
 
 
 class Favorites(models.Model):
@@ -145,6 +149,11 @@ class ShopLists(models.Model):
     class Meta:
         verbose_name_plural = 'Список покупок'
         verbose_name = 'Покупка'
+        constraints = [
+            models.UniqueConstraint(
+                fields=['recipe', 'user'], name='unique_purchase'
+            )
+        ]
 
     def __str__(self) -> str:
         return f'{self.user} - {self.recipe}'
