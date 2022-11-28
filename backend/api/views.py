@@ -28,7 +28,7 @@ class UserViewSet(LookCreate):
     def get_serializer_class(self, *args, **kwargs):
         if self.request.method == 'POST':
             return UserCreateSerializer
-        elif self.request.action == 'subscriptions':
+        elif self.action == 'subscriptions':
             return SubscriptionSerializer
         return UserSerializer
 
@@ -77,7 +77,7 @@ class UserViewSet(LookCreate):
         serializer.save(author=author, subscriber=request.user)
         return Response(serializer.data, status=status.HTTP_201_CREATED)'''
 
-    @action(
+    '''@action(
         detail=False, methods=['get'], url_name='subscriptions',
         url_path='subscriptions'
     )
@@ -90,7 +90,7 @@ class UserViewSet(LookCreate):
             serializer = self.get_serializer(page, many=True)
             return self.get_paginated_response(serializer.data)
         serializer = SubscriptionSerializer(queryset, many=True)
-        return Response(serializer.data)
+        return Response(serializer.data)'''
 
 
 class TagsViewSet(ListRetrieve):
@@ -176,17 +176,11 @@ class SubscribeView(CreateDestroyView):
     fail_message = 'Такой подписки не существует'
 
 
-class SubscriptionsView(ListView):
+class SubscriptionsView(generics.ListAPIView):
     serializer_class = SubscriptionSerializer
     pagination_class = RecipesPagination
-    queryset = User.objects.all()
-    permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
-        queryset = User.objects.filter(
-            subscribers__subscriber=self.request.user
-        )
-        print(queryset)
         return User.objects.filter(
             subscribers__subscriber=self.request.user
         )

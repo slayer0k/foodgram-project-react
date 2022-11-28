@@ -3,15 +3,14 @@ from django.urls import include, path
 from rest_framework import routers
 
 from api.views import (FavoritesView, IngredientsViewSet, RecipesViewSet,
-                       ShopingCart, SubscribeView, TagsViewSet, UserViewSet, SubscriptionsView)
+                       ShopingCart, SubscribeView, TagsViewSet, UserViewSet,
+                       SubscriptionsView)
 
 router = routers.DefaultRouter()
 router.register('users', UserViewSet, basename='users')
 router.register('tags', TagsViewSet, basename='tags')
 router.register('recipes', RecipesViewSet, basename='recipes')
 router.register('ingredients', IngredientsViewSet, basename='ingredients')
-router.register('users/subscriptions', SubscriptionsView, basename='subscriptions')
-# router.register('', FavoritesViewSet, basename='favorites')
 
 urlpatterns = [
     path('auth/', include('djoser.urls')),
@@ -29,4 +28,8 @@ urlpatterns = [
         'users/<int:pk>/subscribe/', SubscribeView.as_view(),
         name='subscribe'
     ),
+    path(
+        'users/subscriptions/', SubscriptionsView.as_view(),
+        name='subscriptions'
+    )
 ]
