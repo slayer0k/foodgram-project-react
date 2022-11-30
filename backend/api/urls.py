@@ -3,16 +3,17 @@ from django.urls import include, path
 from rest_framework import routers
 
 from api.views import (FavoritesView, IngredientsViewSet, RecipesViewSet,
-                       ShopingCart, SubscribeView, TagsViewSet, UserViewSet)
+                       ShopingCart, SubscribeView, SubscriptionsViewSet,
+                       TagsViewSet, UserViewSet)
 
 router = routers.DefaultRouter()
+router.register('users/subscriptions', SubscriptionsViewSet, basename='subs')
 router.register('users', UserViewSet, basename='users')
 router.register('tags', TagsViewSet, basename='tags')
 router.register('recipes', RecipesViewSet, basename='recipes')
 router.register('ingredients', IngredientsViewSet, basename='ingredients')
 
 urlpatterns = [
-    # path('auth/', include('djoser.urls')),
     path('auth/', include('djoser.urls.authtoken')),
     path('', include(router.urls)),
     path(

@@ -5,7 +5,7 @@ from rest_framework.decorators import action
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
-from api.mixins import CreateDestroyView, ListRetrieve, LookCreate
+from api.mixins import CreateDestroyView, ListRetrieve, ListView, LookCreate
 from api.pagination import RecipesPagination
 from api.permissions import OwnerOrAdmin
 from api.response_pdf import get_pdf
@@ -55,21 +55,6 @@ class UserViewSet(LookCreate):
         self.request.user.set_password(serializer.data['new_password'])
         self.request.user.save()
         return Response(status=status.HTTP_204_NO_CONTENT)
-
-    @action(
-        detail=False, methods=['get'], url_name='subscriptions',
-        url_path='subscriptions'
-    )
-    def subsrciptions(self, request):
-        queryset = self.filter_queryset(User.objects.filter(
-            subscribers__subscriber=request.user
-        ))
-        page = self.paginate_queryset(queryset)
-        if page is not None:
-            serializer = self.get_serializer(page, many=True)
-            return self.get_paginated_response(serializer.data)
-        serializer = SubscriptionSerializer(queryset, many=True)
-        return Response(serializer.data)
 
 
 class TagsViewSet(ListRetrieve):
@@ -152,3 +137,14 @@ class SubscribeView(CreateDestroyView):
     object_field = 'author'
     object_model = User
     fail_message = 'Такой подписки не существует'
+
+
+class SubscriptionsViewSet(ListView):
+    serializer_class = SubscriptionSerializer
+    pagination_class = RecipesPagination
+    permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        return User.objects.filter(
+            subscribers__subscriber=self.request.user
+        )
