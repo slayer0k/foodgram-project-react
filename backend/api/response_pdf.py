@@ -5,7 +5,7 @@ from reportlab.pdfbase.ttfonts import TTFont
 from reportlab.pdfgen.canvas import Canvas
 
 
-def get_pdf(queryset):
+def get_pdf(results):
     response = HttpResponse(content_type='application/pdf')
     response['Content-Disposiotion'] = (
         'attachment; filename="shoplist.pdf"'
@@ -21,7 +21,7 @@ def get_pdf(queryset):
     )
     y = 700
     x = 1
-    for object in queryset:
+    for object in results:
         file.drawString(
             50, y,
             f"{x}. {object['recipe_ingredient__ingredient__name']}: "
