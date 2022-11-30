@@ -10,7 +10,6 @@ User = get_user_model()
 class Ingredients(models.Model):
     name = models.CharField(
         max_length=150, verbose_name='Название ингридиента',
-        unique=True
     )
     measuring_unit = models.CharField(max_length=20)
 
@@ -85,6 +84,11 @@ class RecipeIngredients(models.Model):
         ordering = ('pk',)
         verbose_name = 'Ингридиент для рецепта'
         verbose_name_plural = 'Ингридиенты для рецепта'
+        constraints = [
+            models.UniqueConstraint(
+                fields=['recipe', 'ingredient'], name='unique_ingredient'
+            )
+        ]
 
     def __str__(self) -> str:
         return f'{self.recipe} - {self.ingredient}'
@@ -143,7 +147,7 @@ class ShopLists(models.Model):
         Recipes, on_delete=models.CASCADE, related_name='is_shopping_cart'
     )
     user = models.ForeignKey(
-        User, related_name='shoplist', on_delete=models.CASCADE
+        User, related_name='shoplist', on_delete=models.CASCADE,
     )
 
     class Meta:

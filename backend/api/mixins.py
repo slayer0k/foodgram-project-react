@@ -36,9 +36,6 @@ class CreateDestroyView(views.APIView):
     fail_message = None
     permission_classes = [permissions.IsAuthenticated, ]
 
-    class Meta:
-        abstract = True
-
     def get_user(self):
         return self.request.user
 

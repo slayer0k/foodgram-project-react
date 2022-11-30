@@ -1,21 +1,20 @@
 from django.contrib.auth import get_user_model
-from django_filters.rest_framework import DjangoFilterBackend
-# from django.shortcuts import get_object_or_404
-from rest_framework import status, viewsets, pagination, generics
+from django.db.models import Sum
+from rest_framework import filters, status, viewsets
 from rest_framework.decorators import action
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
-from api.filters import RecipesFilterSet
-from api.mixins import CreateDestroyView, ListRetrieve, LookCreate, ListView
+from api.mixins import CreateDestroyView, ListRetrieve, LookCreate
 from api.pagination import RecipesPagination
 from api.permissions import OwnerOrAdmin
+from api.response_pdf import get_pdf
 from api.serializers import (ChangePassword, FavoritesSerializer,
                              FollowSerializer, IngredientsSerializer,
                              RecipesSerializer, ShoppingCartSerializer,
                              SubscriptionSerializer, TagsSerializer,
                              UserCreateSerializer, UserSerializer)
-from foodgram.models import Ingredients, Recipes, Tags  # Subscriptions
+from foodgram.models import Ingredients, Recipes, Tags
 
 User = get_user_model()
 
@@ -28,7 +27,7 @@ class UserViewSet(LookCreate):
     def get_serializer_class(self, *args, **kwargs):
         if self.request.method == 'POST':
             return UserCreateSerializer
-        elif self.action == 'subscriptions':
+        if self.action == 'subscriptions':
             return SubscriptionSerializer
         return UserSerializer
 
@@ -57,27 +56,7 @@ class UserViewSet(LookCreate):
         self.request.user.save()
         return Response(status=status.HTTP_204_NO_CONTENT)
 
-    '''@action(
-        detail=False, methods=['delete', 'post'], url_name='subscribe',
-        url_path=r'(?P<pk>[0-9]+)/subscribe',
-        permission_classes=(IsAuthenticated, )
-    )
-    def subscribe(self, request, pk):
-        author = get_object_or_404(User, pk=pk)
-        if request.method == 'DELETE':
-            Subscriptions.objects.filter(
-                author=author, subscriber=request.user
-            ).delete()
-            return Response(status=status.HTTP_204_NO_CONTENT)
-        serializer = FollowSerializer(
-            data={'author': author, 'subscriber': request.user},
-            context={'request': request}
-        )
-        serializer.is_valid(raise_exception=True)
-        serializer.save(author=author, subscriber=request.user)
-        return Response(serializer.data, status=status.HTTP_201_CREATED)'''
-
-    '''@action(
+    @action(
         detail=False, methods=['get'], url_name='subscriptions',
         url_path='subscriptions'
     )
@@ -90,7 +69,7 @@ class UserViewSet(LookCreate):
             serializer = self.get_serializer(page, many=True)
             return self.get_paginated_response(serializer.data)
         serializer = SubscriptionSerializer(queryset, many=True)
-        return Response(serializer.data)'''
+        return Response(serializer.data)
 
 
 class TagsViewSet(ListRetrieve):
@@ -102,8 +81,6 @@ class RecipesViewSet(viewsets.ModelViewSet):
     queryset = Recipes.objects.all()
     serializer_class = RecipesSerializer
     permission_classes = [OwnerOrAdmin]
-    filter_backends = [DjangoFilterBackend]
-    filterset_class = RecipesFilterSet
     pagination_class = RecipesPagination
 
     def perform_create(self, serializer):
@@ -124,32 +101,33 @@ class RecipesViewSet(viewsets.ModelViewSet):
             )
         if params.get('author'):
             queryset = queryset.filter(author=params['author'])
-        for tag in params.getlist('tags'):
-            queryset = queryset.filter(tags__slug=tag)
+        if params.getlist('tags'):
+            queryset = queryset.filter(
+                tags__slug__in=params.getlist('tags')).distinct()
         return queryset
+
+    @action(
+        detail=False, methods=['get'], url_name='download_shoplist',
+        url_path='download_shopping_cart',
+        permission_classes=[IsAuthenticated]
+    )
+    def download_shopping_cart(self, request):
+        result = Recipes.objects.filter(
+            is_shopping_cart__user=request.user
+        ).values(
+            'recipe_ingredient__ingredient__name',
+            'recipe_ingredient__ingredient__measuring_unit'
+        ).order_by(
+            'recipe_ingredient__ingredient__name'
+        ).annotate(count=Sum('recipe_ingredient__amount'))
+        return get_pdf(result)
 
 
 class IngredientsViewSet(ListRetrieve):
     queryset = Ingredients.objects.all()
     serializer_class = IngredientsSerializer
-
-
-'''@api_view(['delete', 'post'])
-@permission_classes([IsAuthenticated, ])
-def favorites(request, pk):
-    recipe = get_object_or_404(Recipes, pk=pk)
-    if request.method == 'DELETE':
-        Favorites.objects.filter(
-            recipe=recipe, user=request.user
-        ).delete()
-        return Response(status=status.HTTP_204_NO_CONTENT)
-    serializer = FavoritesSerializer(
-        data={'recipe': recipe, 'user': request.user},
-        context={'request': request}
-    )
-    serializer.is_valid(raise_exception=True)
-    serializer.save(recipe=recipe, user=request.user)
-    return Response(serializer.data, status=status.HTTP_201_CREATED)'''
+    filter_backends = [filters.SearchFilter]
+    search_fields = ['^name']
 
 
 class ShopingCart(CreateDestroyView):
@@ -174,13 +152,3 @@ class SubscribeView(CreateDestroyView):
     object_field = 'author'
     object_model = User
     fail_message = 'Такой подписки не существует'
-
-
-class SubscriptionsView(generics.ListAPIView):
-    serializer_class = SubscriptionSerializer
-    pagination_class = RecipesPagination
-
-    def get_queryset(self):
-        return User.objects.filter(
-            subscribers__subscriber=self.request.user
-        )

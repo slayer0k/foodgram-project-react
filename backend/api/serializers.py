@@ -148,22 +148,6 @@ class RecipesForSubscribers(serializers.ModelSerializer):
         fields = ('id', 'name', 'image', 'cooking_time')
 
 
-'''class CreateRecipeSerializer(serializers.ModelSerializer):
-    tags = serializers.PrimaryKeyRelatedField(
-        queryset=Tags.objects.all(), many=True
-    )
-    ingridients = RecipeIngridientSerializer()
-    image = Base64ImageField()
-    author = serializers.PrimaryKeyRelatedField(
-        read_only=True, default=serializers.CurrentUserDefault()
-    )
-
-    class Meta:
-        model = Recipes
-        fields = '__all__'
-        '''
-
-
 class RecipesSerializer(serializers.ModelSerializer):
     tags = serializers.PrimaryKeyRelatedField(
         queryset=Tags.objects.all(), many=True
@@ -189,6 +173,23 @@ class RecipesSerializer(serializers.ModelSerializer):
 
     def validate_cooking_time(self, value):
         bigger_than_zero(value)
+        return value
+
+    def validate_ingredients(self, value):
+        values = set()
+        for ingredient in value:
+            values.add(ingredient['id'])
+        if len(values) < len(value):
+            raise serializers.ValidationError(
+                'Вы добавляете одинаковые ингидиенты несколько раз'
+            )
+        return value
+
+    def validate_tags(self, value):
+        if len(set(value)) < len(value):
+            raise serializers.ValidationError(
+                'Нельзя добавлять одинаковые тэги к одному рецепту'
+            )
         return value
 
     def user(self):
