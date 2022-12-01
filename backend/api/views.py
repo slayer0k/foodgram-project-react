@@ -95,14 +95,13 @@ class RecipesViewSet(viewsets.ModelViewSet):
         permission_classes=[IsAuthenticated]
     )
     def download_shopping_cart(self, request):
-        results = Recipes.objects.filter(
-            is_shopping_cart__user=request.user
-        ).values(
-            'recipe_ingredient__ingredient__name',
-            'recipe_ingredient__ingredient__measuring_unit'
+        results = request.user.shoplist.all().values(
+            'recipe__ingredients',
+            'recipe__ingredients__name',
+            'recipe__ingredients__measuring_unit'
         ).order_by(
-            'recipe_ingredient__ingredient__name'
-        ).annotate(count=Sum('recipe_ingredient__amount'))
+            'recipe__ingredients__name'
+        ).annotate(count=Sum('recipe__recipe_ingredient__amount'))
         return get_pdf(results)
 
 

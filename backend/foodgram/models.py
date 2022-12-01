@@ -147,7 +147,7 @@ class Subscriptions(models.Model):
 
 class ShopLists(models.Model):
     recipe = models.ForeignKey(
-        Recipes, on_delete=models.CASCADE, related_name='is_shopping_cart'
+        Recipes, on_delete=models.CASCADE
     )
     user = models.ForeignKey(
         User, related_name='shoplist', on_delete=models.CASCADE,
