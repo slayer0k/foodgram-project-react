@@ -13,12 +13,10 @@ class Command(BaseCommand):
     def read_file(self):
         try:
             with open(CSV_PATH + 'ingredients.csv', encoding='utf-8') as file:
-                reader = csv.reader(file)
+                reader = csv.DictReader(file)
                 for row in reader:
                     try:
-                        Ingredients.objects.get_or_create(
-                            name=row[0], measuring_unit=row[1]
-                        )
+                        Ingredients.objects.get_or_create(**row)
                     except Exception as e:
                         raise CommandError(
                             'Ошибка при импорте данных из ingredients.csv '

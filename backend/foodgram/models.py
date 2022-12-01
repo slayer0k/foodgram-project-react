@@ -26,7 +26,7 @@ class Tags(models.Model):
     slug = models.SlugField(unique=True)
     color = models.CharField(
         unique=True, max_length=7,
-        validators=[RegexValidator(regex=r'^#[A-Z0-9]{6}')]
+        validators=[RegexValidator(regex=r'^#\w{6}')]
     )
 
     class Meta:
@@ -51,7 +51,10 @@ class Recipes(models.Model):
         'Изображение рецепта', upload_to='recipes/'
     )
     text = models.TextField('описание рецепта')
-    tags = models.ManyToManyField(Tags, verbose_name='тэги', db_index=True)
+    tags = models.ManyToManyField(
+        Tags, verbose_name='тэги', db_index=True,
+        through='RecipeTags'
+    )
     ingredients = models.ManyToManyField(
         Ingredients, through='RecipeIngredients',
         db_index=True, verbose_name='ингридиенты',
@@ -161,3 +164,22 @@ class ShopLists(models.Model):
 
     def __str__(self) -> str:
         return f'{self.user} - {self.recipe}'
+
+
+class RecipeTags(models.Model):
+    tag = models.ForeignKey(Tags, on_delete=models.CASCADE)
+    recipe = models.ForeignKey(
+        Recipes, on_delete=models.CASCADE, related_name='recipe_tags'
+    )
+
+    class Meta:
+        verbose_name = 'Тэг рецепта'
+        verbose_name_plural = 'Тэги рецепта'
+        constraints = [
+            models.UniqueConstraint(
+                fields=['tag', 'recipe'], name='unique_tag'
+            )
+        ]
+
+    def __str__(self) -> str:
+        return f"{self.recipe} - {self.tag}"

@@ -3,7 +3,7 @@ from drf_extra_fields.fields import Base64ImageField
 from rest_framework import serializers
 
 from foodgram.models import (Favorites, Ingredients, RecipeIngredients,
-                             Recipes, ShopLists, Subscriptions, Tags)
+                             Recipes, ShopLists, Subscriptions, Tags, RecipeTags)
 from foodgram.validators import bigger_than_zero
 
 User = get_user_model()
@@ -12,7 +12,7 @@ User = get_user_model()
 def is_subscribed(user, obj):
     return (
         user.is_authenticated
-        and obj in User.objects.filter(subscribers__subscriber=user)
+        and user.subscribed.filter(author=obj).exists()
     )
 
 
@@ -48,19 +48,6 @@ class UserSerializer(serializers.ModelSerializer):
 
     def get_is_subscribed(self, obj):
         return is_subscribed(self.context['request'].user, obj)
-
-
-class ChangePassword(serializers.Serializer):
-    new_password = serializers.CharField()
-    current_password = serializers.CharField()
-
-    def validate(self, attrs):
-        user = self.context.get('user')
-        if not user.check_password(attrs.get('current_password')):
-            raise serializers.ValidationError(
-                'пароль не соответствует'
-            )
-        return attrs
 
 
 class TagsSerializer(serializers.ModelSerializer):
@@ -196,38 +183,44 @@ class RecipesSerializer(serializers.ModelSerializer):
         return self.context['request'].user
 
     def get_is_favorited(self, obj):
-        return self.user().is_authenticated and Favorites.objects.filter(
-            recipe=obj, user=self.user()
-        ).exists()
+        return (
+            self.user().is_authenticated
+            and self.user().favorites.filter(recipe=obj).exists()
+        )
 
     def get_is_in_shopping_cart(self, obj):
-        return self.user().is_authenticated and ShopLists.objects.filter(
-            recipe=obj, user=self.user()).exists()
+        return (
+            self.user().is_authenticated
+            and self.user().shoplist.filter(recipe=obj).exists()
+        )
+
+    def create_ingredients_tags(self, tags, ingredients, recipe):
+        objs = [
+            RecipeTags(recipe=recipe, tag=tag) for tag in tags
+        ]
+        RecipeTags.objects.bulk_create(objs)
+        objs = [
+            RecipeIngredients(
+                recipe=recipe, amount=ingredient['amount'],
+                ingredient=ingredient['id']
+            ) for ingredient in ingredients
+        ]
+        RecipeIngredients.objects.bulk_create(objs)
 
     def create(self, validated_data):
         tags = validated_data.pop('tags')
         ingredients = validated_data.pop('recipe_ingredient')
         recipe = Recipes.objects.create(**validated_data)
-        for tag in tags:
-            recipe.tags.add(tag)
-        for ingredient in ingredients:
-            RecipeIngredients.objects.create(
-                recipe=recipe,
-                ingredient=ingredient['id'], amount=ingredient['amount']
-            )
+        self.create_ingredients_tags(tags, ingredients, recipe)
         return recipe
 
     def update(self, instance, validated_data):
         instance.tags.clear()
-        for tag in validated_data.pop('tags'):
-            instance.tags.add(tag)
         instance.image.delete()
         instance.recipe_ingredient.all().delete()
-        for ingredient in validated_data.pop('recipe_ingredient'):
-            RecipeIngredients.objects.create(
-                recipe=instance,
-                ingredient=ingredient['id'], amount=ingredient['amount']
-            )
+        tags = validated_data.pop('tags')
+        ingredients = validated_data.pop('recipe_ingredient')
+        self.create_ingredients_tags(tags, ingredients, instance)
         return super().update(instance, validated_data)
 
     def to_representation(self, instance):

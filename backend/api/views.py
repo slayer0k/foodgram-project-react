@@ -4,16 +4,17 @@ from rest_framework import filters, status, viewsets
 from rest_framework.decorators import action
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
+from djoser.serializers import SetPasswordSerializer, UserCreateSerializer
 
 from api.mixins import CreateDestroyView, ListRetrieve, ListView, LookCreate
 from api.pagination import RecipesPagination
-from api.permissions import OwnerOrAdmin
-from api.response_pdf import get_pdf
-from api.serializers import (ChangePassword, FavoritesSerializer,
+from api.permissions import OwnerOnly
+from api.utils import get_pdf
+from api.serializers import (FavoritesSerializer,
                              FollowSerializer, IngredientsSerializer,
                              RecipesSerializer, ShoppingCartSerializer,
                              SubscriptionSerializer, TagsSerializer,
-                             UserCreateSerializer, UserSerializer)
+                             UserSerializer)
 from foodgram.models import Ingredients, Recipes, Tags
 
 User = get_user_model()
@@ -25,10 +26,10 @@ class UserViewSet(LookCreate):
     pagination_class = RecipesPagination
 
     def get_serializer_class(self, *args, **kwargs):
+        if self.action == 'set_password':
+            return SetPasswordSerializer
         if self.request.method == 'POST':
             return UserCreateSerializer
-        if self.action == 'subscriptions':
-            return SubscriptionSerializer
         return UserSerializer
 
     def get_instance(self):
@@ -48,9 +49,7 @@ class UserViewSet(LookCreate):
         permission_classes=(IsAuthenticated, )
     )
     def set_password(self, request):
-        serializer = ChangePassword(
-            data=request.data, context={'user': request.user}
-        )
+        serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         self.request.user.set_password(serializer.data['new_password'])
         self.request.user.save()
@@ -65,7 +64,7 @@ class TagsViewSet(ListRetrieve):
 class RecipesViewSet(viewsets.ModelViewSet):
     queryset = Recipes.objects.all()
     serializer_class = RecipesSerializer
-    permission_classes = [OwnerOrAdmin]
+    permission_classes = [OwnerOnly]
     pagination_class = RecipesPagination
 
     def perform_create(self, serializer):

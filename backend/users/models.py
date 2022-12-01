@@ -5,13 +5,20 @@ from django.utils.translation import gettext_lazy as _
 
 
 class User(AbstractUser):
-    username = models.CharField(_('username'), max_length=150, unique=True,
-                                validators=[
-                                    UnicodeUsernameValidator(), ])
+    CHAR_LIMIT: int = 150
+    username = models.CharField(_('username'), max_length=CHAR_LIMIT,
+                                unique=True,
+                                validators=[UnicodeUsernameValidator()]
+                                )
     email = models.EmailField(_('email'), unique=True, max_length=254)
-    first_name = models.CharField(_('first_name'), max_length=150)
-    last_name = models.CharField(_('last_name'), max_length=150)
-    password = models.CharField(_('password'), max_length=150)
+    first_name = models.CharField(_('first_name'), max_length=CHAR_LIMIT)
+    last_name = models.CharField(_('last_name'), max_length=CHAR_LIMIT)
+    password = models.CharField(_('password'), max_length=CHAR_LIMIT)
+
+    USERNAME_FIELD: str = 'email'
+    REQUIRED_FIELDS = [
+        'username', 'first_name', 'last_name'
+    ]
 
     class Meta:
         verbose_name = 'Пользователь'
