@@ -3,7 +3,8 @@ from drf_extra_fields.fields import Base64ImageField
 from rest_framework import serializers
 
 from foodgram.models import (Favorites, Ingredients, RecipeIngredients,
-                             Recipes, ShopLists, Subscriptions, Tags, RecipeTags)
+                             Recipes, RecipeTags, ShopLists, Subscriptions,
+                             Tags)
 from foodgram.validators import bigger_than_zero
 
 User = get_user_model()

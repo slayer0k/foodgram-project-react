@@ -1,20 +1,19 @@
 from django.contrib.auth import get_user_model
 from django.db.models import Sum
+from djoser.serializers import SetPasswordSerializer, UserCreateSerializer
 from rest_framework import filters, status, viewsets
 from rest_framework.decorators import action
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
-from djoser.serializers import SetPasswordSerializer, UserCreateSerializer
 
 from api.mixins import CreateDestroyView, ListRetrieve, ListView, LookCreate
 from api.pagination import RecipesPagination
 from api.permissions import OwnerOnly
+from api.serializers import (FavoritesSerializer, FollowSerializer,
+                             IngredientsSerializer, RecipesSerializer,
+                             ShoppingCartSerializer, SubscriptionSerializer,
+                             TagsSerializer, UserSerializer)
 from api.utils import get_pdf
-from api.serializers import (FavoritesSerializer,
-                             FollowSerializer, IngredientsSerializer,
-                             RecipesSerializer, ShoppingCartSerializer,
-                             SubscriptionSerializer, TagsSerializer,
-                             UserSerializer)
 from foodgram.models import Ingredients, Recipes, Tags
 
 User = get_user_model()
