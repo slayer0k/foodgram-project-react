@@ -17,26 +17,6 @@ def is_subscribed(user, obj):
     )
 
 
-class UserCreateSerializer(serializers.ModelSerializer):
-
-    class Meta:
-        model = User
-        fields = ('username', 'password', 'email', 'first_name', 'last_name')
-
-    def create(self, validated_data):
-        user = User.objects.create(**validated_data)
-        user.set_password(validated_data['password'])
-        user.save()
-        return user
-
-    def to_representation(self, instance):
-        return {
-            'email': instance.email, 'id': instance.id,
-            'username': instance.username, 'first_name': instance.first_name,
-            'last_name': instance.last_name,
-        }
-
-
 class UserSerializer(serializers.ModelSerializer):
     is_subscribed = serializers.SerializerMethodField()
 

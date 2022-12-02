@@ -76,11 +76,12 @@ class RecipesViewSet(viewsets.ModelViewSet):
     def get_queryset(self):
         queryset = Recipes.objects.all()
         params = self.request.query_params
+        print(queryset.filter(shoplists__user=self.request.user))
         if params.get('is_favorited') == '1':
-            queryset = queryset.filter(favorited__user=self.request.user)
+            queryset = queryset.filter(favorites__user=self.request.user)
         if params.get('is_in_shopping_cart') == '1':
             queryset = queryset.filter(
-                is_shopping_cart__user=self.request.user
+                shoplists__user=self.request.user
             )
         if params.get('author'):
             queryset = queryset.filter(author=params['author'])
