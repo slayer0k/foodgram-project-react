@@ -25,7 +25,6 @@ urlpatterns = [
         name='shoplist'
     ),
     path(
-        'users/<int:pk>/subscribe/', SubscribeView.as_view(),
-        name='subscribe'
+        'users/<int:pk>/subscribe/', SubscribeView.as_view()
     ),
 ]

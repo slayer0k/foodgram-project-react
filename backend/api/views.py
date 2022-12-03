@@ -1,58 +1,29 @@
 from django.contrib.auth import get_user_model
 from django.db.models import Sum
-from djoser.serializers import SetPasswordSerializer, UserCreateSerializer
-from rest_framework import filters, status, viewsets
+from django_filters.rest_framework import DjangoFilterBackend
+from djoser.views import UserViewSet
+from rest_framework import filters, response, status, viewsets
 from rest_framework.decorators import action
 from rest_framework.permissions import IsAuthenticated
-from rest_framework.response import Response
 
-from api.mixins import CreateDestroyView, ListRetrieve, ListView, LookCreate
+from api.filters import RecipesFilterSet
+from api.mixins import CreateDestroyView, ListRetrieve, ListView
 from api.pagination import RecipesPagination
 from api.permissions import OwnerOnly
-from api.serializers import (FavoritesSerializer, FollowSerializer,
-                             IngredientsSerializer, RecipesSerializer,
-                             ShoppingCartSerializer, SubscriptionSerializer,
+from api.serializers import (IngredientsSerializer, RecipesForSubscribers,
+                             RecipesSerializer, SubscriptionSerializer,
                              TagsSerializer, UserSerializer)
 from api.utils import get_pdf
-from foodgram.models import Ingredients, Recipes, Tags
+from foodgram.models import (Favorites, Ingredients, Recipes, ShopLists,
+                             Subscriptions, Tags)
 
 User = get_user_model()
 
 
-class UserViewSet(LookCreate):
+class UserViewSet(UserViewSet):
     queryset = User.objects.all()
     serializer_class = UserSerializer
     pagination_class = RecipesPagination
-
-    def get_serializer_class(self, *args, **kwargs):
-        if self.action == 'set_password':
-            return SetPasswordSerializer
-        if self.request.method == 'POST':
-            return UserCreateSerializer
-        return UserSerializer
-
-    def get_instance(self):
-        return self.request.user
-
-    @action(
-        detail=False, methods=['get'], url_name='me',
-        url_path='me', permission_classes=(IsAuthenticated, )
-    )
-    def me(self, request, *args, **kwargs):
-        self.get_object = self.get_instance
-        return self.retrieve(request, *args, **kwargs)
-
-    @action(
-        detail=False, methods=['POST'],
-        url_name='set_password', url_path='set_password',
-        permission_classes=(IsAuthenticated, )
-    )
-    def set_password(self, request):
-        serializer = self.get_serializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
-        self.request.user.set_password(serializer.data['new_password'])
-        self.request.user.save()
-        return Response(status=status.HTTP_204_NO_CONTENT)
 
 
 class TagsViewSet(ListRetrieve):
@@ -65,18 +36,15 @@ class RecipesViewSet(viewsets.ModelViewSet):
     serializer_class = RecipesSerializer
     permission_classes = [OwnerOnly]
     pagination_class = RecipesPagination
+    filter_backends = [DjangoFilterBackend]
+    filterset_class = RecipesFilterSet
 
     def perform_create(self, serializer):
         serializer.save(author=self.request.user)
 
-    def update(self, request, *args, **kwargs):
-        kwargs['partial'] = False
-        return super().update(request, *args, **kwargs)
-
-    def get_queryset(self):
+    '''def get_queryset(self):
         queryset = Recipes.objects.all()
         params = self.request.query_params
-        print(queryset.filter(shoplists__user=self.request.user))
         if params.get('is_favorited') == '1':
             queryset = queryset.filter(favorites__user=self.request.user)
         if params.get('is_in_shopping_cart') == '1':
@@ -88,7 +56,7 @@ class RecipesViewSet(viewsets.ModelViewSet):
         if params.getlist('tags'):
             queryset = queryset.filter(
                 tags__slug__in=params.getlist('tags')).distinct()
-        return queryset
+        return queryset'''
 
     @action(
         detail=False, methods=['get'], url_name='download_shoplist',
@@ -96,8 +64,9 @@ class RecipesViewSet(viewsets.ModelViewSet):
         permission_classes=[IsAuthenticated]
     )
     def download_shopping_cart(self, request):
+        print(request.user.shoplist.all().values('recipe__ingredient'))
         results = request.user.shoplist.all().values(
-            'recipe__ingredients',
+            'recipe__recipe_ingredient',
             'recipe__ingredients__name',
             'recipe__ingredients__measuring_unit'
         ).order_by(
@@ -114,27 +83,38 @@ class IngredientsViewSet(ListRetrieve):
 
 
 class ShopingCart(CreateDestroyView):
-    serializer_class = ShoppingCartSerializer
+    representation_class = RecipesForSubscribers
     user_field = 'user'
     object_field = 'recipe'
     object_model = Recipes
     fail_message = 'Этого рецепта нету в корзине'
+    model = ShopLists
 
 
 class FavoritesView(CreateDestroyView):
-    serializer_class = FavoritesSerializer
+    representation_class = RecipesForSubscribers
     user_field = 'user'
     object_field = 'recipe'
     object_model = Recipes
     fail_message = 'У вас нету этого рецепта в избранном'
+    model = Favorites
 
 
 class SubscribeView(CreateDestroyView):
-    serializer_class = FollowSerializer
+    representation_class = SubscriptionSerializer
+    model = Subscriptions
     user_field = 'subscriber'
     object_field = 'author'
     object_model = User
     fail_message = 'Такой подписки не существует'
+
+    def post(self, request, pk):
+        if self.user() == self.get_second_object():
+            return response.Response(
+                'Вы не можете подписаться на самого себя',
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        return super().post(request)
 
 
 class SubscriptionsViewSet(ListView):

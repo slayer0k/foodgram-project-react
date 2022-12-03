@@ -12,6 +12,8 @@ https://docs.djangoproject.com/en/2.2/ref/settings/
 
 import os
 
+from rest_framework.permissions import AllowAny
+
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
@@ -39,6 +41,7 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'rest_framework',
     'rest_framework.authtoken',
+    'django_filters',
     'djoser',
     'foodgram',
     'users',
@@ -153,3 +156,17 @@ REST_FRAMEWORK = {
     ],
     'PAGE_SIZE': 4
 }
+
+DJOSER = {
+    'SERIALIZERS': {
+        'users': 'api.serializers.UserSerializer',
+        'current_user': 'api.serializers.UserSerializer'
+    },
+    'HIDE_USERS': False,
+    'PERMISSIONS': {
+        'user_list': [AllowAny],
+    }
+}
+
+CHAR_LIMIT = 150
+BIG_CHAR_LIMIT = 254

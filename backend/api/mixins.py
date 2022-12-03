@@ -1,6 +1,6 @@
 from django.shortcuts import get_object_or_404
-from rest_framework import (mixins, permissions, response, status, views,
-                            viewsets)
+from rest_framework import mixins, permissions, status, views, viewsets
+from rest_framework.response import Response
 
 
 class LookCreate(
@@ -29,14 +29,14 @@ class CreateDestroyView(views.APIView):
     и авторизованным пользователем
     '''
 
-    serializer_class = None
+    representation_class = None
+    model = None
     object_model = None
     user_field = None
-    object_field = None
     fail_message = None
     permission_classes = [permissions.IsAuthenticated, ]
 
-    def get_user(self):
+    def user(self):
         return self.request.user
 
     def get_second_object(self):
@@ -49,34 +49,33 @@ class CreateDestroyView(views.APIView):
 
     def data(self):
         return {
-            self.user_field: self.get_user(),
+            self.user_field: self.user(),
             self.object_field: self.get_second_object()
         }
 
     def context(self):
         return {'request': self.request}
 
-    def get_object(self):
-        try:
-            object = self.get_model().objects.get(**self.data())
-            return object
-        except self.get_model().DoesNotExist:
-            return None
-
     def delete(self, request, pk):
-        if self.get_object():
-            self.get_object().delete()
-            return response.Response(status=status.HTTP_204_NO_CONTENT)
-        return response.Response(
-            self.fail_message, status=status.HTTP_400_BAD_REQUEST
-        )
+        try:
+            object = self.model.objects.get(**self.data())
+            object.delete()
+            return Response(status=status.HTTP_204_NO_CONTENT)
+        except self.model.DoesNotExist:
+            return Response(
+                self.fail_message, status=status.HTTP_400_BAD_REQUEST
+            )
 
     def post(self, request, pk):
-        serializer = self.serializer_class(
-            data=self.data(), context=self.context()
-        )
-        serializer.is_valid()
-        serializer.save(**self.data())
-        return response.Response(
-            serializer.data, status=status.HTTP_201_CREATED
+        object, created = self.model.objects.get_or_create(**self.data())
+        if not created:
+            return Response(
+                'Такая связь уже существует',
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        return Response(
+            self.representation_class(
+                self.get_second_object(), context=self.context()
+            ).data,
+            status=status.HTTP_201_CREATED
         )

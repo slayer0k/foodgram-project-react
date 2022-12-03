@@ -1,3 +1,6 @@
+from __future__ import annotations
+
+from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.core.validators import RegexValidator
 from django.db import models
@@ -9,7 +12,8 @@ User = get_user_model()
 
 class Ingredients(models.Model):
     name = models.CharField(
-        max_length=150, verbose_name='Название ингридиента',
+        max_length=settings.CHAR_LIMIT,
+        verbose_name='Название ингридиента',
     )
     measuring_unit = models.CharField(max_length=20)
 
@@ -22,11 +26,11 @@ class Ingredients(models.Model):
 
 
 class Tags(models.Model):
-    name = models.CharField(unique=True, max_length=150)
+    name = models.CharField(unique=True, max_length=settings.CHAR_LIMIT)
     slug = models.SlugField(unique=True)
     color = models.CharField(
         unique=True, max_length=7,
-        validators=[RegexValidator(regex=r'^#\w{6}')]
+        validators=[RegexValidator(regex=r'^#\w+')]
     )
 
     class Meta:
@@ -44,7 +48,7 @@ class Recipes(models.Model):
         related_name='recipes',
     )
     name = models.CharField(
-        max_length=150, verbose_name='Название рецепта',
+        max_length=settings.CHAR_LIMIT, verbose_name='Название рецепта',
         db_index=True
     )
     image = models.ImageField(
@@ -56,8 +60,7 @@ class Recipes(models.Model):
         through='RecipeTags'
     )
     ingredients = models.ManyToManyField(
-        Ingredients, through='RecipeIngredients',
-        db_index=True, verbose_name='ингридиенты',
+        'RecipeIngredients', db_index=True, verbose_name='ингридиенты'
     )
     cooking_time = models.PositiveSmallIntegerField(
         'Время приготовления', validators=[bigger_than_zero, ]
@@ -80,7 +83,7 @@ class RecipeIngredients(models.Model):
         'количество', validators=[bigger_than_zero, ]
     )
     ingredient = models.ForeignKey(
-        Ingredients, on_delete=models.CASCADE,
+        Ingredients, on_delete=models.CASCADE, related_name='+'
     )
 
     class Meta:
@@ -147,7 +150,7 @@ class Subscriptions(models.Model):
 
 class ShopLists(models.Model):
     recipe = models.ForeignKey(
-        Recipes, on_delete=models.CASCADE
+        Recipes, on_delete=models.CASCADE, related_name='+'
     )
     user = models.ForeignKey(
         User, related_name='shoplist', on_delete=models.CASCADE,
@@ -168,7 +171,9 @@ class ShopLists(models.Model):
 
 class RecipeTags(models.Model):
     tag = models.ForeignKey(Tags, on_delete=models.CASCADE)
-    recipe = models.ForeignKey(Recipes, on_delete=models.CASCADE)
+    recipe = models.ForeignKey(
+        Recipes, on_delete=models.CASCADE, related_name='recipe_tags'
+    )
 
     class Meta:
         verbose_name = 'Тэг рецепта'

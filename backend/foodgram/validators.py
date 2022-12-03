@@ -2,7 +2,7 @@ from django.core.exceptions import ValidationError
 
 
 def bigger_than_zero(value):
-    if value <= 0:
+    if value < 1:
         raise ValidationError(
-            'Значение должно быть больше нуля'
+            'Значение не может быть меньше 1'
         )
