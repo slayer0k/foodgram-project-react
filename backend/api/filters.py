@@ -9,7 +9,7 @@ class RecipesFilterSet(FilterSet):
         field_name='author__id'
     )
     tags = django_filters.ModelMultipleChoiceFilter(
-        field_name='tags__slug', queryset=Tags.objects.all(),
+        queryset=Tags.objects.all(), field_name='tags__slug',
         to_field_name='slug'
     )
 

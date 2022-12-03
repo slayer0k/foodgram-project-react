@@ -42,35 +42,17 @@ class RecipesViewSet(viewsets.ModelViewSet):
     def perform_create(self, serializer):
         serializer.save(author=self.request.user)
 
-    '''def get_queryset(self):
-        queryset = Recipes.objects.all()
-        params = self.request.query_params
-        if params.get('is_favorited') == '1':
-            queryset = queryset.filter(favorites__user=self.request.user)
-        if params.get('is_in_shopping_cart') == '1':
-            queryset = queryset.filter(
-                shoplists__user=self.request.user
-            )
-        if params.get('author'):
-            queryset = queryset.filter(author=params['author'])
-        if params.getlist('tags'):
-            queryset = queryset.filter(
-                tags__slug__in=params.getlist('tags')).distinct()
-        return queryset'''
-
     @action(
         detail=False, methods=['get'], url_name='download_shoplist',
         url_path='download_shopping_cart',
         permission_classes=[IsAuthenticated]
     )
     def download_shopping_cart(self, request):
-        print(request.user.shoplist.all().values('recipe__ingredient'))
         results = request.user.shoplist.all().values(
-            'recipe__recipe_ingredient',
-            'recipe__ingredients__name',
-            'recipe__ingredients__measuring_unit'
+            'recipe__recipe_ingredient__ingredient__name',
+            'recipe__recipe_ingredient__ingredient__measuring_unit'
         ).order_by(
-            'recipe__ingredients__name'
+            'recipe__recipe_ingredient__ingredient__name'
         ).annotate(count=Sum('recipe__recipe_ingredient__amount'))
         return get_pdf(results)
 
