@@ -49,6 +49,7 @@ class RecipesViewSet(viewsets.ModelViewSet):
     )
     def download_shopping_cart(self, request):
         results = request.user.shoplist.all().values(
+            'recipe__recipe_ingredient__ingredient__id',
             'recipe__recipe_ingredient__ingredient__name',
             'recipe__recipe_ingredient__ingredient__measuring_unit'
         ).order_by(
