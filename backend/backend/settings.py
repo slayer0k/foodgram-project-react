@@ -165,6 +165,7 @@ DJOSER = {
     'HIDE_USERS': False,
     'PERMISSIONS': {
         'user_list': [AllowAny],
+        'user': [AllowAny],
     }
 }
 

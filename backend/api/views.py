@@ -25,6 +25,13 @@ class UserViewSet(UserViewSet):
     serializer_class = UserSerializer
     pagination_class = RecipesPagination
 
+    @action(
+        ["get"], detail=False, permission_classes=[IsAuthenticated]
+    )
+    def me(self, request, *args, **kwargs):
+        self.get_object = self.get_instance
+        return self.retrieve(request, *args, **kwargs)
+
 
 class TagsViewSet(ListRetrieve):
     queryset = Tags.objects.all()
