@@ -24,9 +24,9 @@ def get_pdf(results):
     for obj in results:
         file.drawString(
             50, y,
-            f"{x}. {obj['recipe__recipe_ingredient__ingredient__name']}: "
+            f"{x}. {obj['recipe__recipeingredients__ingredient__name']}: "
             f"{obj['count']} "
-            f"{obj['recipe__recipe_ingredient__ingredient__measuring_unit']}"
+            f"{obj['recipe__recipeingredients__ingredient__measuring_unit']}"
         )
         y -= 20
         x += 1

@@ -12,8 +12,6 @@ https://docs.djangoproject.com/en/2.2/ref/settings/
 
 import os
 
-from rest_framework.permissions import AllowAny
-
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
@@ -154,18 +152,19 @@ REST_FRAMEWORK = {
     'TEST_REQUEST_RENDERER_CLASSES': [
         'rest_framework.renderers.JSONRenderer',
     ],
-    'PAGE_SIZE': 4
+    'PAGE_SIZE': 4,
+    'DEFAULT_PAGINATION_CLASS': 'api.pagination.RecipesPagination',
 }
 
 DJOSER = {
     'SERIALIZERS': {
-        'users': 'api.serializers.UserSerializer',
-        'current_user': 'api.serializers.UserSerializer'
+        'current_user': 'api.serializers.UserSerializer',
+        'user': 'api.serializers.UserSerializer'
     },
     'HIDE_USERS': False,
     'PERMISSIONS': {
-        'user_list': [AllowAny],
-        'user': [AllowAny],
+        'user_list': ['rest_framework.permissions.AllowAny'],
+        'user': ['djoser.permissions.CurrentUserOrAdminOrReadOnly']
     }
 }
 

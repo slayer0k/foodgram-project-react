@@ -1,7 +1,6 @@
 from django.contrib.auth import get_user_model
 from django.db.models import Sum
 from django_filters.rest_framework import DjangoFilterBackend
-from djoser.views import UserViewSet
 from rest_framework import filters, response, status, viewsets
 from rest_framework.decorators import action
 from rest_framework.permissions import IsAuthenticated
@@ -12,25 +11,12 @@ from api.pagination import RecipesPagination
 from api.permissions import OwnerOnly
 from api.serializers import (IngredientsSerializer, RecipesForSubscribers,
                              RecipesSerializer, SubscriptionSerializer,
-                             TagsSerializer, UserSerializer)
+                             TagsSerializer)
 from api.utils import get_pdf
 from foodgram.models import (Favorites, Ingredients, Recipes, ShopLists,
                              Subscriptions, Tags)
 
 User = get_user_model()
-
-
-class UserViewSet(UserViewSet):
-    queryset = User.objects.all()
-    serializer_class = UserSerializer
-    pagination_class = RecipesPagination
-
-    @action(
-        ["get"], detail=False, permission_classes=[IsAuthenticated]
-    )
-    def me(self, request, *args, **kwargs):
-        self.get_object = self.get_instance
-        return self.retrieve(request, *args, **kwargs)
 
 
 class TagsViewSet(ListRetrieve):
@@ -42,7 +28,6 @@ class RecipesViewSet(viewsets.ModelViewSet):
     queryset = Recipes.objects.all()
     serializer_class = RecipesSerializer
     permission_classes = [OwnerOnly]
-    pagination_class = RecipesPagination
     filter_backends = [DjangoFilterBackend]
     filterset_class = RecipesFilterSet
 
@@ -56,12 +41,12 @@ class RecipesViewSet(viewsets.ModelViewSet):
     )
     def download_shopping_cart(self, request):
         results = request.user.shoplist.all().values(
-            'recipe__recipe_ingredient__ingredient__id',
-            'recipe__recipe_ingredient__ingredient__name',
-            'recipe__recipe_ingredient__ingredient__measuring_unit'
+            'recipe__recipeingredients__ingredient__id',
+            'recipe__recipeingredients__ingredient__name',
+            'recipe__recipeingredients__ingredient__measuring_unit'
         ).order_by(
-            'recipe__recipe_ingredient__ingredient__name'
-        ).annotate(count=Sum('recipe__recipe_ingredient__amount'))
+            'recipe__recipeingredients__ingredient__name'
+        ).annotate(count=Sum('recipe__recipeingredients__amount'))
         return get_pdf(results)
 
 
@@ -104,7 +89,7 @@ class SubscribeView(CreateDestroyView):
                 'Вы не можете подписаться на самого себя',
                 status=status.HTTP_400_BAD_REQUEST
             )
-        return super().post(request)
+        return super().post(request, pk)
 
 
 class SubscriptionsViewSet(ListView):
@@ -114,5 +99,5 @@ class SubscriptionsViewSet(ListView):
 
     def get_queryset(self):
         return User.objects.filter(
-            subscribers__subscriber=self.request.user
+            id__in=self.request.user.subscribed.all().values('author')
         )

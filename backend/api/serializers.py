@@ -85,7 +85,7 @@ class RecipesSerializer(serializers.ModelSerializer):
     )
     author = UserSerializer(read_only=True)
     ingredients = RecipeIngridientSerializer(
-        many=True, required=True, source='recipe_ingredient'
+        many=True, required=True, source='recipeingredients_set'
     )
     is_favorited = serializers.SerializerMethodField()
     is_in_shopping_cart = serializers.SerializerMethodField()
@@ -154,8 +154,9 @@ class RecipesSerializer(serializers.ModelSerializer):
         RecipeTags.objects.bulk_create(objs)
 
     def create(self, validated_data):
+        print(validated_data)
         tags = validated_data.pop('tags')
-        ingredients = validated_data.pop('recipe_ingredient')
+        ingredients = validated_data.pop('recipeingredients_set')
         recipe = Recipes.objects.create(**validated_data)
         self.create_ingredients(ingredients, recipe)
         self.create_tags(tags, recipe)
@@ -168,9 +169,9 @@ class RecipesSerializer(serializers.ModelSerializer):
             self.create_tags(tags, instance)
         if validated_data.get('image'):
             instance.image.delete()
-        if validated_data.get('recipe_ingredient'):
-            ingredients = validated_data.pop('recipe_ingredient')
-            instance.recipe_ingredient.all().delete()
+        if validated_data.get('recipeingredients_set'):
+            ingredients = validated_data.pop('recipeingredients_set')
+            instance.recipeingredients_set.all().delete()
             self.create_ingredients(ingredients, instance)
         return super().update(instance, validated_data)
 

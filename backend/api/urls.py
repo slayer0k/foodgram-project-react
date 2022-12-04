@@ -1,10 +1,11 @@
 
 from django.urls import include, path
+from djoser.views import UserViewSet
 from rest_framework import routers
 
 from api.views import (FavoritesView, IngredientsViewSet, RecipesViewSet,
                        ShopingCart, SubscribeView, SubscriptionsViewSet,
-                       TagsViewSet, UserViewSet)
+                       TagsViewSet)
 
 router = routers.DefaultRouter()
 router.register('users/subscriptions', SubscriptionsViewSet, basename='subs')

@@ -30,7 +30,7 @@ class Tags(models.Model):
     slug = models.SlugField(unique=True)
     color = models.CharField(
         unique=True, max_length=7,
-        validators=[RegexValidator(regex=r'^#\w+')]
+        validators=[RegexValidator(r'^#([a-fA-f0-9]{3}){1,2}$')],
     )
 
     class Meta:
@@ -77,7 +77,7 @@ class Recipes(models.Model):
 
 class RecipeIngredients(models.Model):
     recipe = models.ForeignKey(
-        Recipes, on_delete=models.CASCADE, related_name='recipe_ingredient'
+        Recipes, on_delete=models.CASCADE
     )
     amount = models.PositiveSmallIntegerField(
         'количество', validators=[bigger_than_zero, ]
