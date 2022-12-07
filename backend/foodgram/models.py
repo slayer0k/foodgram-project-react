@@ -14,6 +14,7 @@ class Ingredients(models.Model):
     name = models.CharField(
         max_length=settings.CHAR_LIMIT,
         verbose_name='Название ингридиента',
+        db_index=True
     )
     measuring_unit = models.CharField(max_length=20)
 
@@ -60,7 +61,7 @@ class Recipes(models.Model):
         through='RecipeTags'
     )
     ingredients = models.ManyToManyField(
-        'RecipeIngredients', db_index=True, verbose_name='ингридиенты'
+        'RecipeIngredients', db_index=True, verbose_name='ингридиенты',
     )
     cooking_time = models.PositiveSmallIntegerField(
         'Время приготовления', validators=[bigger_than_zero, ]
@@ -83,7 +84,8 @@ class RecipeIngredients(models.Model):
         'количество', validators=[bigger_than_zero, ]
     )
     ingredient = models.ForeignKey(
-        Ingredients, on_delete=models.CASCADE, related_name='+'
+        Ingredients, on_delete=models.CASCADE, related_name='+',
+        verbose_name='ингредиент'
     )
 
     class Meta:

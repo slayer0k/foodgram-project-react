@@ -27,3 +27,9 @@ class RecipesFilterSet(FilterSet):
         if params.get('is_in_shopping_cart') == '1':
             qs = qs.filter(id__in=user.shoplist.all().values('recipe'))
         return qs
+
+
+class IngredientsFilterSet(FilterSet):
+    name = django_filters.CharFilter(
+        field_name='name', lookup_expr='startswith'
+    )

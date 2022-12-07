@@ -1,11 +1,11 @@
 from django.contrib.auth import get_user_model
 from django.db.models import Sum
 from django_filters.rest_framework import DjangoFilterBackend
-from rest_framework import filters, response, status, viewsets
+from rest_framework import response, status, viewsets
 from rest_framework.decorators import action
 from rest_framework.permissions import IsAuthenticated
 
-from api.filters import RecipesFilterSet
+from api.filters import RecipesFilterSet, IngredientsFilterSet
 from api.mixins import CreateDestroyView, ListRetrieve, ListView
 from api.pagination import RecipesPagination
 from api.permissions import OwnerOnly
@@ -55,8 +55,8 @@ class IngredientsViewSet(ListRetrieve):
     queryset = Ingredients.objects.all()
     serializer_class = IngredientsSerializer
     pagination_class = None
-    filter_backends = [filters.SearchFilter]
-    search_fields = ['^name']
+    filter_backends = [DjangoFilterBackend]
+    filterset_class = IngredientsFilterSet
 
 
 class ShopingCart(CreateDestroyView):
