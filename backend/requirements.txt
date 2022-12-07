@@ -16,3 +16,4 @@ django-extra-fields==3.0.2
 Pillow==9.3.0
 djoser==2.1.0
 reportlab==3.6.12
+django-dotenv==1.4.2

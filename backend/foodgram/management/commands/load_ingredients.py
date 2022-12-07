@@ -4,7 +4,7 @@ from django.core.management.base import BaseCommand, CommandError
 
 from foodgram.models import Ingredients
 
-CSV_PATH = '../data/'
+CSV_PATH = '../backend/'
 
 
 class Command(BaseCommand):
@@ -12,7 +12,7 @@ class Command(BaseCommand):
 
     def read_file(self):
         try:
-            with open(CSV_PATH + 'ingredients.csv', encoding='utf-8') as file:
+            with open('ingredients.csv', encoding='utf-8') as file:
                 reader = csv.DictReader(file)
                 for row in reader:
                     try:

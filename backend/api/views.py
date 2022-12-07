@@ -22,6 +22,7 @@ User = get_user_model()
 class TagsViewSet(ListRetrieve):
     queryset = Tags.objects.all()
     serializer_class = TagsSerializer
+    pagination_class = None
 
 
 class RecipesViewSet(viewsets.ModelViewSet):
@@ -53,6 +54,7 @@ class RecipesViewSet(viewsets.ModelViewSet):
 class IngredientsViewSet(ListRetrieve):
     queryset = Ingredients.objects.all()
     serializer_class = IngredientsSerializer
+    pagination_class = None
     filter_backends = [filters.SearchFilter]
     search_fields = ['^name']
 
