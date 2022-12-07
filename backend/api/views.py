@@ -5,7 +5,7 @@ from rest_framework import response, status, viewsets
 from rest_framework.decorators import action
 from rest_framework.permissions import IsAuthenticated
 
-from api.filters import RecipesFilterSet, IngredientsFilterSet
+from api.filters import IngredientsFilterSet, RecipesFilterSet
 from api.mixins import CreateDestroyView, ListRetrieve, ListView
 from api.pagination import RecipesPagination
 from api.permissions import OwnerOnly
