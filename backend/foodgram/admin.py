@@ -11,12 +11,14 @@ class RecipeIngredientsInline(admin.StackedInline):
     model = RecipeIngredients
     raw_id_fields = ['ingredient']
     extra = 0
+    min_num = 1
 
 
 class RecipeTagsInline(admin.StackedInline):
     model = RecipeTags
     raw_id_fields = ['tag']
     extra = 0
+    min_num = 1
 
 
 @admin.register(Ingredients)

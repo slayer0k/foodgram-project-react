@@ -12,11 +12,17 @@ User = get_user_model()
 
 class Ingredients(models.Model):
     name = models.CharField(
-        max_length=settings.CHAR_LIMIT,
+        max_length=settings.MEDIUM_CHAR_LIMIT,
         verbose_name='Название ингридиента',
-        db_index=True
+        db_index=True, validators=[
+            RegexValidator(r'^[а-яА-Я ]+$')
+        ],
     )
-    measuring_unit = models.CharField(max_length=20)
+    measuring_unit = models.CharField(
+        max_length=settings.MEDIUM_CHAR_LIMIT, validators=[
+            RegexValidator(r'^[а-яА-Я_. ]+$')
+        ]
+    )
 
     class Meta:
         verbose_name = 'Ингридиент'
@@ -27,8 +33,15 @@ class Ingredients(models.Model):
 
 
 class Tags(models.Model):
-    name = models.CharField(unique=True, max_length=settings.CHAR_LIMIT)
-    slug = models.SlugField(unique=True)
+    name = models.CharField(
+        unique=True, max_length=settings.MEDIUM_CHAR_LIMIT,
+        validators=[RegexValidator(r'^[а-яА-Я]+$')]
+    )
+    slug = models.SlugField(
+        unique=True, validators=[
+            RegexValidator(r'^[a-zA-Z0-9_]+$')
+        ], max_length=settings.MEDIUM_CHAR_LIMIT
+    )
     color = models.CharField(
         unique=True, max_length=7,
         validators=[RegexValidator(r'^#([a-fA-f0-9]{3}){1,2}$')],
@@ -49,8 +62,9 @@ class Recipes(models.Model):
         related_name='recipes',
     )
     name = models.CharField(
-        max_length=settings.CHAR_LIMIT, verbose_name='Название рецепта',
-        db_index=True
+        max_length=settings.MEDIUM_CHAR_LIMIT,
+        verbose_name='Название рецепта', db_index=True,
+        validators=[RegexValidator(r'^[а-яА-Я]+$')]
     )
     image = models.ImageField(
         'Изображение рецепта', upload_to='recipes/'
