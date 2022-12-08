@@ -64,7 +64,7 @@ class Recipes(models.Model):
     name = models.CharField(
         max_length=settings.MEDIUM_CHAR_LIMIT,
         verbose_name='Название рецепта', db_index=True,
-        validators=[RegexValidator(r'^[а-яА-Я]+$')]
+        validators=[RegexValidator(r'^[а-яА-Я ]+$')]
     )
     image = models.ImageField(
         'Изображение рецепта', upload_to='recipes/'
